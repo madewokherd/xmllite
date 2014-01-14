@@ -2,6 +2,7 @@
  * IXmlReader implementation
  *
  * Copyright 2010, 2012-2013 Nikolay Sivov
+ * Copyright 2014 Vincent Povirk
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,21 +23,10 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
-#include "initguid.h"
-#include "objbase.h"
+
+#include "list.h"
 #include "xmllite.h"
 #include "xmllite_private.h"
-
-#include "wine/debug.h"
-#include "wine/list.h"
-#include "wine/unicode.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
-
-/* not defined in public headers */
-DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
 typedef enum
 {
@@ -125,7 +115,7 @@ static const char *debugstr_nodetype(XmlNodeType nodetype)
     };
 
     if (nodetype > _XmlNodeType_Last)
-        return wine_dbg_sprintf("unknown type=%d", nodetype);
+        return "unknown type";
 
     return type_names[nodetype];
 }
@@ -145,7 +135,7 @@ static const char *debugstr_prop(XmlReaderProperty prop)
     };
 
     if (prop > _XmlReaderProperty_Last)
-        return wine_dbg_sprintf("unknown property=%d", prop);
+        return "unknown property";
 
     return prop_names[prop];
 }
