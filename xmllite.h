@@ -22,6 +22,7 @@
 #define _XMLLITE_H
 
 #include <stdint.h>
+#include <wctype.h>
 
 typedef struct _XMLGUID
 {
@@ -36,7 +37,121 @@ typedef struct _XMLGUID
 
 typedef int32_t XMLHRESULT;
 
+#define XML_S_OK ((XMLHRESULT)0)
+#define XML_E_NOTIMPL ((XMLHRESULT)0x80004001)
+#define XML_E_OUTOFMEMORY ((XMLHRESULT)0x8007000e)
+#define XML_E_PENDING ((XMLHRESULT)0x8000000a)
+
+#define XML_FAILED(hr) (((XMLHRESULT)hr) < 0)
+#define XML_SUCCEEDED(hr) (((XMLHRESULT)hr) >= 0)
+
 typedef uint16_t XMLWCHAR;
+
+static inline unsigned int xml_wcslen( const XMLWCHAR *str )
+{
+    const XMLWCHAR *s = str;
+    while (*s) s++;
+    return s - str;
+}
+
+extern int xml_wcsicmp( const XMLWCHAR *str1, const XMLWCHAR *str2 );
+extern int xml_wcsnicmp( const XMLWCHAR *str1, const XMLWCHAR *str2, int n );
+
+typedef enum DtdProcessing
+{
+    DtdProcessing_Prohibit,
+    DtdProcessing_Parse,
+    _DtdProcessing_Last = DtdProcessing_Parse
+} DtdProcessing;
+
+typedef enum XmlError
+{
+    MX_E_MX = 0xc00cee00,
+    MX_E_INPUTEND,
+    MX_E_ENCODING,
+    MX_E_ENCODINGSWITCH,
+    MX_E_ENCODINGSIGNATURE,
+    WC_E_WC = 0xc00cee20,
+    WC_E_WHITESPACE,
+    WC_E_SEMICOLON,
+    WC_E_GREATERTHAN,
+    WC_E_QUOTE,
+    WC_E_EQUAL,
+    WC_E_LESSTHAN,
+    WC_E_HEXDIGIT,
+    WC_E_DIGIT,
+    WC_E_LEFTBRACKET,
+    WC_E_LEFTPAREN,
+    WC_E_XMLCHARACTER,
+    WC_E_NAMECHARACTER,
+    WC_E_SYNTAX,
+    WC_E_CDSECT,
+    WC_E_COMMENT,
+    WC_E_CONDSECT,
+    WC_E_DECLATTLIST,
+    WC_E_DECLDOCTYPE,
+    WC_E_DECLELEMENT,
+    WC_E_DECLENTITY,
+    WC_E_DECLNOTATION,
+    WC_E_NDATA,
+    WC_E_PUBLIC,
+    WC_E_SYSTEM,
+    WC_E_NAME,
+    WC_E_ROOTELEMENT,
+    WC_E_ELEMENTMATCH,
+    WC_E_UNIQUEATTRIBUTE,
+    WC_E_TEXTXMLDECL,
+    WC_E_LEADINGXML,
+    WC_E_TEXTDECL,
+    WC_E_XMLDECL,
+    WC_E_ENCNAME,
+    WC_E_PUBLICID,
+    WC_E_PESINTERNALSUBSET,
+    WC_E_PESBETWEENDECLS,
+    WC_E_NORECURSION,
+    WC_E_ENTITYCONTENT,
+    WC_E_UNDECLAREDENTITY,
+    WC_E_PARSEDENTITY,
+    WC_E_NOEXTERNALENTITYREF,
+    WC_E_PI,
+    WC_E_SYSTEMID,
+    WC_E_QUESTIONMARK,
+    WC_E_CDSECTEND,
+    WC_E_MOREDATA,
+    WC_E_DTDPROHIBITED,
+    WC_E_INVALIDXMLSPACE,
+    NC_E_NC = 0xc00cee60,
+    NC_E_QNAMECHARACTER,
+    NC_E_QNAMECOLON,
+    NC_E_NAMECOLON,
+    NC_E_DECLAREDPREFIX,
+    NC_E_UNDECLAREDPREFIX,
+    NC_E_EMPTYURI,
+    NC_E_XMLPREFIXRESERVED,
+    NC_E_XMLNSPREFIXRESERVED,
+    NC_E_XMLURIRESERVED,
+    NC_E_XMLNSURIRESERVED,
+    SC_E_SC = 0xc00cee80,
+    SC_E_MAXELEMENTDEPTH,
+    SC_E_MAXENTITYEXPANSION,
+    WR_E_WR = 0xc00cef00,
+    WR_E_NONWHITESPACE,
+    WR_E_NSPREFIXDECLARED,
+    WR_E_NSPREFIXWITHEMPTYNSURI,
+    WR_E_DUPLICATEATTRIBUTE,
+    WR_E_XMLNSPREFIXDECLARATION,
+    WR_E_XMLPREFIXDECLARATION,
+    WR_E_XMLURIDECLARATION,
+    WR_E_XMLNSURIDECLARATION,
+    WR_E_NAMESPACEUNDECLARED,
+    WR_E_INVALIDXMLSPACE,
+    WR_E_INVALIDACTION,
+    WR_E_INVALIDSURROGATEPAIR,
+    XML_E_INVALID_DECIMAL = 0xc00ce01d,
+    XML_E_INVALID_HEXIDECIMAL,
+    XML_E_INVALID_UNICODE,
+    XML_E_INVALIDENCODING = 0xc00ce06e
+} XmlError;
 
 typedef enum XmlNodeType {
     XmlNodeType_None                  = 0,
@@ -66,6 +181,46 @@ typedef enum XmlReaderProperty
     _XmlReaderProperty_Last = XmlReaderProperty_MaxEntityExpansion
 } XmlReaderProperty;
 
+typedef enum XmlReadState
+{
+    XmlReadState_Initial,
+    XmlReadState_Interactive,
+    XmlReadState_Error,
+    XmlReadState_EndOfFile,
+    XmlReadState_Closed
+} XmlReadState;
+
+typedef struct XML_LARGE_INTEGER
+{
+    int64_t QuadPart;
+} XML_LARGE_INTEGER;
+
+typedef struct XML_ULARGE_INTEGER
+{
+    uint64_t QuadPart;
+} XML_ULARGE_INTEGER;
+
+typedef struct XML_FILETIME
+{
+    uint32_t dwLowDateTime;
+    uint32_t dwHighDateTime;
+} XML_FILETIME;
+
+typedef struct XML_STATSTG
+{
+    XMLWCHAR *pwcsName;
+    uint32_t type;
+    XML_ULARGE_INTEGER cbSize;
+    XML_FILETIME mtime;
+    XML_FILETIME ctime;
+    XML_FILETIME atime;
+    uint32_t grfMode;
+    uint32_t grfLocksSupported;
+    XMLGUID clsid;
+    uint32_t grfStateBits;
+    uint32_t reserved;
+} XML_STATSTG;
+
 #ifdef __i386__
 # ifdef __GNUC__
 #  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
@@ -91,12 +246,14 @@ typedef enum XmlReaderProperty
 DEFINE_XML_GUID(IID_IXmlUnknown, 0x00000000, 0x0000, 0x0000, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 DEFINE_XML_GUID(IID_IXmlMalloc, 0x00000002, 0x0000, 0x0000, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 DEFINE_XML_GUID(IID_IXmlSequentialStream, 0x0c733a30, 0x2a1c, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
+DEFINE_XML_GUID(IID_IXmlStream, 0x0000000c, 0x0000, 0x0000, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 DEFINE_XML_GUID(IID_IXmlReader, 0x7279fc81, 0x709d, 0x4095, 0xb6, 0x3d, 0x69, 0xfe, 0x4b, 0x0d, 0x90, 0x30);
 DEFINE_XML_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
 typedef struct IXmlUnknown IXmlUnknown;
 typedef struct IXmlMalloc IXmlMalloc;
 typedef struct IXmlSequentialStream IXmlSequentialStream;
+typedef struct IXmlStream IXmlStream;
 typedef struct IXmlReader IXmlReader;
 typedef struct IXmlUnknown IXmlReaderInput;
 
@@ -292,6 +449,174 @@ static XMLINLINE XMLHRESULT IXmlSequentialStream_Read(IXmlSequentialStream *This
 }
 static XMLINLINE XMLHRESULT IXmlSequentialStream_Write(IXmlSequentialStream *This,const void *pv,uint32_t cb,uint32_t *pcbWritten) {
     return This->lpVtbl->Write(This, pv, cb, pcbWritten);
+}
+#endif
+
+/* IXmlStream */
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IXmlStream : public IXmlSequentialStream {
+    virtual XMLHRESULT _xml_stdcall Seek(
+        XML_LARGE_INTEGER dlibMove,
+        uint32_t dwOrigin,
+        XML_ULARGE_INTEGER *plibNewPosition) = 0;
+
+    virtual XMLHRESULT _xml_stdcall SetSize(
+        XML_ULARGE_INTEGER libNewSize) = 0;
+
+    virtual XMLHRESULT _xml_stdcall CopyTo(
+        IXmlStream *pstm,
+        XML_ULARGE_INTEGER cb,
+        XML_ULARGE_INTEGER *pcbRead,
+        XML_ULARGE_INTEGER *pcbWritten) = 0;
+
+    virtual XMLHRESULT _xml_stdcall Commit(
+        uint32_t grfCommitFlags) = 0;
+
+    virtual XMLHRESULT _xml_stdcall Revert(
+        ) = 0;
+
+    virtual XMLHRESULT _xml_stdcall LockRegion(
+        XML_ULARGE_INTEGER libOffset,
+        XML_ULARGE_INTEGER cb,
+        uint32_t dwLockType) = 0;
+
+    virtual XMLHRESULT _xml_stdcall UnlockRegion(
+        XML_ULARGE_INTEGER libOffset,
+        XML_ULARGE_INTEGER cb,
+        uint32_t dwLockType) = 0;
+
+    virtual XMLHRESULT _xml_stdcall Stat(
+        XML_STATSTG *pstatstg,
+        uint32_t grfStatFlag) = 0;
+
+    virtual XMLHRESULT _xml_stdcall Clone(
+        IXmlStream **ppstm) = 0;
+};
+#else
+typedef struct IXmlStreamVtbl {
+    /*** IXmlStream methods ***/
+    XMLHRESULT (_xml_stdcall *QueryInterface)(
+        IXmlStream* This,
+        const XMLGUID * riid,
+        void **ppvObject);
+
+    uint32_t (_xml_stdcall *AddRef)(
+        IXmlStream* This);
+
+    uint32_t (_xml_stdcall *Release)(
+        IXmlStream* This);
+
+    XMLHRESULT (_xml_stdcall *Read)(
+        IXmlStream* This,
+        void *pv,
+        uint32_t cb,
+        uint32_t *pcbRead);
+
+    XMLHRESULT (_xml_stdcall *Write)(
+        IXmlStream* This,
+        const void *pv,
+        uint32_t cb,
+        uint32_t *pcbWritten);
+
+    XMLHRESULT (_xml_stdcall *Seek)(
+        IXmlStream* This,
+        XML_LARGE_INTEGER dlibMove,
+        uint32_t dwOrigin,
+        XML_ULARGE_INTEGER *plibNewPosition);
+
+    XMLHRESULT (_xml_stdcall *SetSize)(
+        IXmlStream* This,
+        XML_ULARGE_INTEGER libNewSize);
+
+    XMLHRESULT (_xml_stdcall *CopyTo)(
+        IXmlStream* This,
+        IXmlStream *pstm,
+        XML_ULARGE_INTEGER cb,
+        XML_ULARGE_INTEGER *pcbRead,
+        XML_ULARGE_INTEGER *pcbWritten);
+
+    XMLHRESULT (_xml_stdcall *Commit)(
+        IXmlStream* This,
+        uint32_t grfCommitFlags);
+
+    XMLHRESULT (_xml_stdcall *Revert)(
+        IXmlStream* This);
+
+    XMLHRESULT (_xml_stdcall *LockRegion)(
+        IXmlStream* This,
+        XML_ULARGE_INTEGER libOffset,
+        XML_ULARGE_INTEGER cb,
+        uint32_t dwLockType);
+
+    XMLHRESULT (_xml_stdcall *UnlockRegion)(
+        IXmlStream* This,
+        XML_ULARGE_INTEGER libOffset,
+        XML_ULARGE_INTEGER cb,
+        uint32_t dwLockType);
+
+    XMLHRESULT (_xml_stdcall *Stat)(
+        IXmlStream* This,
+        XML_STATSTG *pstatstg,
+        uint32_t grfStatFlag);
+
+    XMLHRESULT (_xml_stdcall *Clone)(
+        IXmlStream* This,
+        IXmlStream **ppstm);
+
+} IXmlStreamVtbl;
+struct IXmlStream {
+    const IXmlStreamVtbl* lpVtbl;
+};
+
+static XMLINLINE XMLHRESULT IXmlStream_QueryInterface(IXmlStream *This,const XMLGUID *riid,void **ppvObject) {
+    return This->lpVtbl->QueryInterface(This, riid, ppvObject);
+}
+static XMLINLINE uint32_t IXmlStream_AddRef(IXmlStream *This) {
+    return This->lpVtbl->AddRef(This);
+}
+static XMLINLINE uint32_t IXmlStream_Release(IXmlStream *This) {
+    return This->lpVtbl->Release(This);
+}
+static XMLINLINE XMLHRESULT IXmlStream_Read(IXmlStream *This,void *pv,uint32_t cb,uint32_t *pcbRead) {
+    return This->lpVtbl->Read(This, pv, cb, pcbRead);
+}
+static XMLINLINE XMLHRESULT IXmlStream_Write(IXmlStream *This,const void *pv,uint32_t cb,uint32_t *pcbWritten) {
+    return This->lpVtbl->Write(This, pv, cb, pcbWritten);
+}
+static XMLINLINE XMLHRESULT IXmlStream_Seek(IXmlStream* This, XML_LARGE_INTEGER dlibMove, uint32_t dwOrigin, XML_ULARGE_INTEGER *plibNewPosition) {
+    return This->lpVtbl->Seek(This, dlibMove, dwOrigin, plibNewPosition);
+}
+static XMLINLINE XMLHRESULT IXmlStream_SetSize(IXmlStream* This, XML_ULARGE_INTEGER libNewSize)
+{
+    return This->lpVtbl->SetSize(This, libNewSize);
+}
+static XMLINLINE XMLHRESULT IXmlStream_CopyTo(IXmlStream* This, IXmlStream *pstm, XML_ULARGE_INTEGER cb, XML_ULARGE_INTEGER *pcbRead, XML_ULARGE_INTEGER *pcbWritten)
+{
+    return This->lpVtbl->CopyTo(This, pstm, cb, pcbRead, pcbWritten);
+}
+static XMLINLINE XMLHRESULT IXmlStream_Commit(IXmlStream* This, uint32_t grfCommitFlags)
+{
+    return This->lpVtbl->Commit(This, grfCommitFlags);
+}
+static XMLINLINE XMLHRESULT IXmlStream_Revert(IXmlStream* This)
+{
+    return This->lpVtbl->Revert(This);
+}
+static XMLINLINE XMLHRESULT IXmlStream_LockRegion(IXmlStream* This, XML_ULARGE_INTEGER libOffset, XML_ULARGE_INTEGER cb, uint32_t dwLockType)
+{
+    return This->lpVtbl->LockRegion(This, libOffset, cb, dwLockType);
+}
+static XMLINLINE XMLHRESULT IXmlStream_UnlockRegion(IXmlStream* This, XML_ULARGE_INTEGER libOffset, XML_ULARGE_INTEGER cb, uint32_t dwLockType)
+{
+    return This->lpVtbl->UnlockRegion(This, libOffset, cb, dwLockType);
+}
+static XMLINLINE XMLHRESULT IXmlStream_Stat(IXmlStream* This, XML_STATSTG *pstatstg, uint32_t grfStatFlag)
+{
+    return This->lpVtbl->Stat(This, pstatstg, grfStatFlag);
+}
+static XMLINLINE XMLHRESULT IXmlStream_Clone(IXmlStream* This, IXmlStream **ppstm)
+{
+    return This->lpVtbl->Clone(This, ppstm);
 }
 #endif
 

@@ -23,17 +23,12 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "list.h"
 #include "xmllite.h"
 #include "xmllite_private.h"
-
-typedef enum
-{
-    XmlEncoding_UTF16,
-    XmlEncoding_UTF8,
-    XmlEncoding_Unknown
-} xml_encoding;
 
 typedef enum
 {
@@ -115,7 +110,7 @@ static const char *debugstr_nodetype(XmlNodeType nodetype)
     };
 
     if (nodetype > _XmlNodeType_Last)
-        return "unknown type";
+        return wine_dbg_sprintf("unknown type=%d", nodetype);
 
     return type_names[nodetype];
 }
@@ -135,21 +130,27 @@ static const char *debugstr_prop(XmlReaderProperty prop)
     };
 
     if (prop > _XmlReaderProperty_Last)
-        return "unknown property";
+        return wine_dbg_sprintf("unknown property=%d", prop);
 
     return prop_names[prop];
 }
 
-struct xml_encoding_data
+typedef struct xml_encoding_data
 {
-    const WCHAR *name;
-    xml_encoding enc;
-    UINT cp;
-};
+    const WCHAR *xml_name;
+    const char *iconv_name;
+    char bom[4];
+    int bom_len;
+    char prefix[4];
+    int prefix_len;
+} xml_encoding_data;
 
 static const struct xml_encoding_data xml_encoding_map[] = {
-    { utf16W, XmlEncoding_UTF16, ~0 },
-    { utf8W,  XmlEncoding_UTF8,  CP_UTF8 }
+    { utf8W, "UTF-8", {0xef, 0xbb, 0xbf}, 3, {'<','?','x','m'}, 4 },
+    { NULL, "UCS-4LE", {0xff, 0xfe, 0x00, 0x00}, 4, {0x3c, 0x00, 0x00, 0x00}, 4 },
+    { NULL, "UCS-4BE", {0x00, 0x00, 0xfe, 0xff}, 4, {0x00, 0x00, 0x00, 0x3c}, 4 },
+    { NULL, "UTF-16LE", {0xff, 0xfe}, 2, {0x3c, 0x00, 0x3f, 0x00}, 4 },
+    { NULL, "UTF-16BE", {0xfe, 0xff}, 2, {0x00, 0x3c, 0x00, 0x3f}, 4 },
 };
 
 typedef struct
@@ -169,7 +170,7 @@ typedef struct
     /* reference passed on IXmlReaderInput creation, is kept when input is created */
     IUnknown *input;
     IMalloc *imalloc;
-    xml_encoding encoding;
+    const xml_encoding_data *encoding;
     BOOL hint;
     WCHAR *baseuri;
     /* stream reference set after SetInput() call from reader,
@@ -564,19 +565,6 @@ static HRESULT init_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer
 static void free_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer)
 {
     readerinput_free(input, buffer->data);
-}
-
-static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
-{
-    if (encoding == XmlEncoding_Unknown)
-    {
-        FIXME("unsupported encoding %d\n", encoding);
-        return E_NOTIMPL;
-    }
-
-    *cp = xml_encoding_map[encoding].cp;
-
-    return S_OK;
 }
 
 static xml_encoding parse_encoding_name(const WCHAR *name, int len)
